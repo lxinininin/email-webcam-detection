@@ -1,13 +1,16 @@
 # pip install opencv-python
 import cv2
 import time
+from emailing import send_email
 
 video = cv2.VideoCapture(0)  # 0 means using the main camera
 time.sleep(1)
 
 first_frame = None
+status_list = []
 
 while True:
+    status = 0
     check, frame = video.read()
     # convert frame to gray frame
     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -40,7 +43,16 @@ while True:
         # (x, y) is the coordinate of left-up corner, (x+w, y+h) is the coordinate of right-down corner
         # (o, 255, 0) is the color of the rectangle, which is pure green
         # 3 is the width
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 3)
+        rectangle = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 3)
+        if rectangle.any():
+            status = 1
+
+    status_list.append(status)
+    status_list = status_list[-2:]  # last 2 elements
+
+    # the object just exit from the frame
+    if status_list[0] == 1 and status_list[1] == 0:
+        send_email()
 
     cv2.imshow("My video", frame)
 
