@@ -1,6 +1,7 @@
 # pip install opencv-python
 import cv2
 import time
+import glob
 from emailing import send_email
 
 video = cv2.VideoCapture(0)  # 0 means using the main camera
@@ -8,10 +9,12 @@ time.sleep(1)
 
 first_frame = None
 status_list = []
+count = 1
 
 while True:
     status = 0
     check, frame = video.read()
+
     # convert frame to gray frame
     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     # gray_frame_gau will be the grayscale image gray_frame
@@ -46,6 +49,13 @@ while True:
         rectangle = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 3)
         if rectangle.any():
             status = 1
+
+            # store the image
+            cv2.imwrite(f"images/{count}.png", frame)
+            count += 1
+            all_images = glob.glob("images/*.png")
+            index = int(len(all_images) / 2)  # get the middle image
+            image_with_object = all_images[index]
 
     status_list.append(status)
     status_list = status_list[-2:]  # last 2 elements
