@@ -1,8 +1,10 @@
 # pip install opencv-python
 import cv2
+import os
 import time
 import glob
 from emailing import send_email
+from threading import Thread
 
 video = cv2.VideoCapture(0)  # 0 means using the main camera
 time.sleep(1)
@@ -10,6 +12,14 @@ time.sleep(1)
 first_frame = None
 status_list = []
 count = 1
+
+def clean_folder():
+    print("clean_folder function started")
+    images = glob.glob("images/*.png")
+    # remove all the images in images folder
+    for image in images:
+        os.remove(image)
+    print("clean_folder function ended")
 
 while True:
     status = 0
@@ -62,7 +72,18 @@ while True:
 
     # the object just exit from the frame
     if status_list[0] == 1 and status_list[1] == 0:
-        send_email(image_with_object)
+        # in order to avoid when we run send_email(), the video will freeze for a while
+        # we can create multiple threads
+        # send_email(image_with_object)
+        email_thread = Thread(target=send_email, args=(image_with_object, ))
+        email_thread.daemon = True  # this line will allow send_email() execute in the background
+        # clean_folder() it can be also replaced
+        clean_thread = Thread(target=clean_folder)
+        clean_thread.daemon = True
+
+        # these will start threads
+        email_thread.start()
+        # clean_thread.start()
 
     cv2.imshow("My video", frame)
 
@@ -73,3 +94,6 @@ while True:
         break
 
 video.release()
+
+# avoid when we send_email() in process, clean_thread() executes to delete the image we would like to send
+clean_thread.start()
